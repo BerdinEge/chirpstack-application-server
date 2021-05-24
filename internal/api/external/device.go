@@ -785,6 +785,14 @@ func (a *DeviceAPI) StreamFrameLogs(req *pb.StreamDeviceFrameLogsRequest, srv pb
 			return err
 		}
 
+		upToDecode, downToDecode, err := decodeUpandDownPayload(resp.GetUplinkFrameSet(), resp.GetDownlinkFrame(), true)
+		if upToDecode != nil {
+			log.Info("UP decoded")
+		}
+		if downToDecode != nil {
+			log.Info("DOWN decoded")
+		}
+
 		up, down, err := convertUplinkAndDownlinkFrames(resp.GetUplinkFrameSet(), resp.GetDownlinkFrame(), true)
 		if err != nil {
 			return helpers.ErrToRPCError(err)
@@ -937,26 +945,22 @@ func (a *DeviceAPI) returnList(count int, devices []storage.DeviceListItem) (*pb
 
 func convertUplinkAndDownlinkFrames(up *ns.UplinkFrameLog, down *ns.DownlinkFrameLog, decodeMACCommands bool) (*pb.UplinkFrameLog, *pb.DownlinkFrameLog, error) {
 	var phy lorawan.PHYPayload
-
 	if up != nil {
 		if err := phy.UnmarshalBinary(up.PhyPayload); err != nil {
 			return nil, nil, errors.Wrap(err, "unmarshal phypayload error")
 		}
 	}
-
 	if down != nil {
 		if err := phy.UnmarshalBinary(down.PhyPayload); err != nil {
 			return nil, nil, errors.Wrap(err, "unmarshal phypayload error")
 		}
 	}
-
 	if decodeMACCommands {
 		switch v := phy.MACPayload.(type) {
 		case *lorawan.MACPayload:
 			if err := phy.DecodeFOptsToMACCommands(); err != nil {
 				return nil, nil, errors.Wrap(err, "decode fopts to mac-commands error")
 			}
-
 			if v.FPort != nil && *v.FPort == 0 {
 				if err := phy.DecodeFRMPayloadToMACCommands(); err != nil {
 					return nil, nil, errors.Wrap(err, "decode frmpayload to mac-commands error")
@@ -964,34 +968,79 @@ func convertUplinkAndDownlinkFrames(up *ns.UplinkFrameLog, down *ns.DownlinkFram
 			}
 		}
 	}
-
 	phyJSON, err := json.Marshal(phy)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "marshal phypayload error")
 	}
-
 	if up != nil {
 		uplinkFrameLog := pb.UplinkFrameLog{
 			TxInfo:         up.TxInfo,
 			RxInfo:         up.RxInfo,
 			PhyPayloadJson: string(phyJSON),
 		}
-
+		//log.Info("Uplink Frame Log = ", uplinkFrameLog)
 		return &uplinkFrameLog, nil, nil
 	}
-
 	if down != nil {
 		var gatewayID lorawan.EUI64
 		copy(gatewayID[:], down.GatewayId)
-
 		downlinkFrameLog := pb.DownlinkFrameLog{
 			TxInfo:         down.TxInfo,
 			PhyPayloadJson: string(phyJSON),
 			GatewayId:      gatewayID.String(),
 		}
-
+		//log.Info("Downlink Frame Log = ", downlinkFrameLog)
+		//log.Info("UP ---> ", up)
+		//log.Info("DOWN ---> ", down)
+		//log.Info("MACCOMANDS ---> ", decodeMACCommands)
 		return nil, &downlinkFrameLog, nil
 	}
+	return nil, nil, nil
+}
 
+func decodeUpandDownPayload(upToDecode *ns.UplinkFrameLog, downToDecode *ns.DownlinkFrameLog, decodeMACCommands bool) (*pb.UplinkFrameLog, *pb.DownlinkFrameLog, error) {
+	var phy lorawan.PHYPayload
+	if upToDecode != nil {
+		if err := phy.UnmarshalBinary(upToDecode.PhyPayload); err != nil {
+			log.Info("Up is Empty")
+			return nil, nil, nil
+		}
+	}
+	if downToDecode != nil {
+		if err := phy.UnmarshalBinary(downToDecode.PhyPayload); err != nil {
+			log.Info("Down is Empty")
+			return nil, nil, nil
+		}
+	}
+	if decodeMACCommands {
+		switch v := phy.MACPayload.(type) {
+		case *lorawan.MACPayload:
+			if err := phy.DecodeFOptsToMACCommands(); err != nil {
+				log.Info(err)
+				return nil, nil, nil
+			}
+			if v.FPort != nil {
+				if err := phy.DecodeFRMPayloadToMACCommands(); err != nil {
+					log.Info(err)
+					return nil, nil, nil
+				}
+			}
+		}
+	}
+
+	phyJSON, err := json.Marshal(phy)
+	if err != nil {
+		log.Info(err)
+		return nil, nil, nil
+	}
+	if upToDecode != nil {
+
+		log.Info("UP PAYLOAD ---> ", string(phyJSON))
+		return nil, nil, nil
+	}
+	if downToDecode != nil {
+		log.Info("DOWN PAYLOAD ---> ", string(phyJSON))
+		return nil, nil, nil
+	}
 	return nil, nil, nil
 }
