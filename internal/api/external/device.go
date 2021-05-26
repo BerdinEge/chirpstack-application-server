@@ -1028,7 +1028,7 @@ func decodeUpandDownPayload(upToDecode *ns.UplinkFrameLog, downToDecode *ns.Down
 		}
 	}
 
-	phyJSON, err := json.Marshal(phy)
+	/*phyJSON, err := json.Marshal(phy)
 	if err != nil {
 		log.Info(err)
 		return nil, nil, nil
@@ -1041,6 +1041,6 @@ func decodeUpandDownPayload(upToDecode *ns.UplinkFrameLog, downToDecode *ns.Down
 	if downToDecode != nil {
 		log.Info("DOWN PAYLOAD ---> ", string(phyJSON))
 		return nil, nil, nil
-	}
+	}*/
 	return nil, nil, nil
 }
