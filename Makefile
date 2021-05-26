@@ -3,7 +3,7 @@ VERSION := $(shell git describe --always |sed -e "s/^v//")
 API_VERSION := $(shell go list -m -f '{{ .Version }}' github.com/brocaar/chirpstack-api/go/v3 | awk '{n=split($$0, a, "-"); print a[n]}')
 
 build: ui/build static/swagger/api.swagger.json
-	mkdir -p build
+	
 	go build $(GO_EXTRA_BUILD_ARGS) -ldflags "-s -w -X main.version=$(VERSION)" -o build/chirpstack-application-server cmd/chirpstack-application-server/main.go
 
 clean:
@@ -71,6 +71,6 @@ ui-requirements:
 	@echo "Installing UI requirements"
 	@cd ui && npm install
 
-serve: build
+serve:
 	@echo "Starting ChirpStack Application Server"
 	./build/chirpstack-application-server
