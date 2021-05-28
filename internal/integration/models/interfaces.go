@@ -9,6 +9,7 @@ import (
 // Integration defines the integration interface.
 type Integration interface {
 	HandleUplinkEvent(ctx context.Context, vars map[string]string, pl integration.UplinkEvent) error
+	HandleDownlinkEvent(ctx context.Context, vars map[string]string, pl integration.DownlinkEvent) error
 	HandleJoinEvent(ctx context.Context, vars map[string]string, pl integration.JoinEvent) error
 	HandleAckEvent(ctx context.Context, vars map[string]string, pl integration.AckEvent) error
 	HandleErrorEvent(ctx context.Context, vars map[string]string, pl integration.ErrorEvent) error
@@ -26,6 +27,7 @@ type Integration interface {
 // then will be handled by all integrations.
 type IntegrationHandler interface {
 	HandleUplinkEvent(ctx context.Context, i Integration, vars map[string]string, pl integration.UplinkEvent) error
+	HandleDownlinkEvent(ctx context.Context, i Integration, vars map[string]string, pl integration.DownlinkEvent) error
 	HandleJoinEvent(ctx context.Context, i Integration, vars map[string]string, pl integration.JoinEvent) error
 	HandleAckEvent(ctx context.Context, i Integration, vars map[string]string, pl integration.AckEvent) error
 	HandleErrorEvent(ctx context.Context, i Integration, vars map[string]string, pl integration.ErrorEvent) error

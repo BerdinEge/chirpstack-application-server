@@ -236,6 +236,11 @@ func (i *Integration) HandleUplinkEvent(ctx context.Context, _ models.Integratio
 	return nil
 }
 
+// HandleDownlinkEvent is not implemented.
+func (i *Integration) HandleDownlinkEvent(ctx context.Context, _ models.Integration, vars map[string]string, pl pb.DownlinkEvent) error {
+	return nil
+}
+
 // HandleStatusEvent writes the device-status into InfluxDB.
 func (i *Integration) HandleStatusEvent(ctx context.Context, _ models.Integration, vars map[string]string, pl pb.StatusEvent) error {
 	var devEUI lorawan.EUI64

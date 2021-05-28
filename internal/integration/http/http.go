@@ -191,6 +191,18 @@ func (i *Integration) HandleUplinkEvent(ctx context.Context, _ models.Integratio
 	return nil
 }
 
+// HandleDownlinkEvent sends an DownlinkEvent.
+func (i *Integration) HandleDownlinkEvent(ctx context.Context, _ models.Integration, vars map[string]string, pl pb.DownlinkEvent) error {
+	var devEUI lorawan.EUI64
+	copy(devEUI[:], pl.DevEui)
+
+	for _, url := range getURLs(i.getEventEndpointURL("up")) {
+		i.sendEvent(ctx, "down", url, devEUI, &pl)
+	}
+
+	return nil
+}
+
 // HandleJoinEvent sends a JoinEvent.
 func (i *Integration) HandleJoinEvent(ctx context.Context, _ models.Integration, vars map[string]string, pl pb.JoinEvent) error {
 	var devEUI lorawan.EUI64

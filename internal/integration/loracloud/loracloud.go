@@ -142,6 +142,11 @@ func (i *Integration) HandleUplinkEvent(ctx context.Context, ii models.Integrati
 	return nil
 }
 
+// HandleDownlinkEvent is not implemented.
+func (i *Integration) HandleDownlinkEvent(ctx context.Context, _ models.Integration, vars map[string]string, pl pb.DownlinkEvent) error {
+	return nil
+}
+
 // HandleJoinEvent is not implemented.
 func (i *Integration) HandleJoinEvent(ctx context.Context, _ models.Integration, vars map[string]string, pl pb.JoinEvent) error {
 	var devEUI lorawan.EUI64

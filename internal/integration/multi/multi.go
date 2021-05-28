@@ -43,6 +43,23 @@ func (i *Integration) HandleUplinkEvent(ctx context.Context, vars map[string]str
 	return nil
 }
 
+// HandleDownlinkEvent sends a DownlinkEvent.
+func (i *Integration) HandleDownlinkEvent(ctx context.Context, vars map[string]string, pl pb.DownlinkEvent) error {
+	for _, ii := range i.integrations() {
+
+		go func(ii models.IntegrationHandler) {
+			if err := ii.HandleDownlinkEvent(ctx, i, vars, pl); err != nil {
+				log.WithError(err).WithFields(log.Fields{
+					"integration": fmt.Sprintf("%T", ii),
+					"ctx_id":      ctx.Value(logging.ContextIDKey),
+				}).Error("integration/multi: integration error")
+			}
+		}(ii)
+	}
+
+	return nil
+}
+
 // HandleJoinEvent sends a JoinEvent.
 func (i *Integration) HandleJoinEvent(ctx context.Context, vars map[string]string, pl pb.JoinEvent) error {
 	for _, ii := range i.integrations() {

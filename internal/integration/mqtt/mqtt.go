@@ -3,9 +3,9 @@ package mqtt
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
-	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -264,6 +264,11 @@ func (i *Integration) Close() error {
 // HandleUplinkEvent sends an UplinkEvent.
 func (i *Integration) HandleUplinkEvent(ctx context.Context, _ models.Integration, vars map[string]string, payload pb.UplinkEvent) error {
 	return i.publish(ctx, payload.ApplicationId, payload.DevEui, "up", &payload)
+}
+
+// HandleDownlinkEvent sends an DownlinkEvent.
+func (i *Integration) HandleDownlinkEvent(ctx context.Context, _ models.Integration, vars map[string]string, payload pb.DownlinkEvent) error {
+	return i.publish(ctx, payload.ApplicationId, payload.DevEui, "down", &payload)
 }
 
 // HandleJoinEvent sends a JoinEvent.

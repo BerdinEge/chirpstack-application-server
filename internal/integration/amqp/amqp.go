@@ -52,6 +52,11 @@ func (i *Integration) HandleUplinkEvent(ctx context.Context, _ models.Integratio
 	return i.publishEvent(ctx, pl.ApplicationId, pl.DevEui, "up", &pl)
 }
 
+// HandleDownlinkEvent sends an DownlinkEvent.
+func (i *Integration) HandleDownlinkEvent(ctx context.Context, _ models.Integration, vars map[string]string, pl pb.DownlinkEvent) error {
+	return i.publishEvent(ctx, pl.ApplicationId, pl.DevEui, "down", &pl)
+}
+
 // HandleJoinEvent sends a JoinEvent.
 func (i *Integration) HandleJoinEvent(ctx context.Context, _ models.Integration, vars map[string]string, pl pb.JoinEvent) error {
 	return i.publishEvent(ctx, pl.ApplicationId, pl.DevEui, "join", &pl)

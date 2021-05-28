@@ -261,6 +261,106 @@ func (i *Integration) HandleUplinkEvent(ctx context.Context, _ models.Integratio
 	return nil
 }
 
+// HandleDownEvent is not implemented.
+func (i *Integration) HandleDownlinkEvent(ctx context.Context, _ models.Integration, vars map[string]string, pl pb.DownlinkEvent) error {
+	log.Info("*******************************************")
+	log.Info("*******************************************")
+	log.Info("*******************************************")
+	log.Info("*******************************************")
+	log.Info("*******************************************")
+	log.Info("*******************************************")
+	log.Info("VERİ POSTGRE METODUNA KADAR GELDİ")
+	log.Info("*******************************************")
+	log.Info("*******************************************")
+	log.Info("*******************************************")
+	log.Info("*******************************************")
+	log.Info("*******************************************")
+	log.Info("*******************************************")
+	/*
+		// use an UUID here so that we can later refactor this for correlation
+		id, err := uuid.NewV4()
+		if err != nil {
+			return errors.Wrap(err, "new uuid error")
+		}
+
+		// get the rxTime either using the system-time or using one of the
+		// gateway provided timestamps.
+		rxTime, err := time.Parse(time.Now().String(), pl.SentAt)
+		if err != nil {
+			return errors.Wrap(err, "protobuf timestamp error")
+		}
+
+		txInfoB := []byte("null")
+		if txInfo := pl.GetTxInfo(); txInfo != nil {
+			txInfoB, err = marshaler.Marshal(i.marshaler, txInfo)
+			if err != nil {
+				return errors.Wrap(err, "marshal tx_info error")
+			}
+		}
+
+		objectJSON := json.RawMessage("null")
+		if pl.ObjectJson != "" {
+			objectJSON = json.RawMessage(pl.ObjectJson)
+		}
+
+		var devEUI lorawan.EUI64
+		var devAddr lorawan.DevAddr
+		copy(devEUI[:], pl.DevEui)
+		copy(devAddr[:], pl.DevAddr)
+
+		_, err = i.db.Exec(`
+			insert into device_down (
+				id,
+				sent_at,
+				dev_eui,
+				device_name,
+				application_id,
+				application_name,
+				frequency,
+				dr,
+				adr,
+				f_cnt,
+				f_port,
+				data,
+				rx_info,
+				tx_info,
+				object,
+				tags,
+				confirmed_downlink,
+				dev_addr
+			) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
+			id,
+			rxTime,
+			devEUI,
+			pl.DeviceName,
+			pl.ApplicationId,
+			pl.ApplicationName,
+			// TODO: deprecate this field, as it is part of tx_info.
+			pl.GetTxInfo().GetFrequency(),
+			pl.Dr,
+			pl.Adr,
+			pl.FCnt,
+			pl.FPort,
+			pl.Data,
+			json.RawMessage(txInfoB),
+			objectJSON,
+			tagsToHstore(pl.Tags),
+			pl.ConfirmedDownlink,
+			devAddr[:],
+		)
+		if err != nil {
+			return errors.Wrap(err, "insert error")
+		}
+
+		log.WithFields(log.Fields{
+			"event":   "up",
+			"dev_eui": devEUI,
+			"ctx_id":  ctx.Value(logging.ContextIDKey),
+		}).Info("integration/postgresql: event stored")
+	*/
+	return nil
+}
+
 // HandleStatusEvent writes a StatusEvent into the database.
 func (i *Integration) HandleStatusEvent(ctx context.Context, _ models.Integration, vars map[string]string, pl pb.StatusEvent) error {
 	// use an UUID here so that we can later refactor this for correlation

@@ -125,6 +125,11 @@ func (i *Integration) HandleUplinkEvent(ctx context.Context, _ models.Integratio
 	return nil
 }
 
+// HandleDownEvent is not implemented.
+func (i *Integration) HandleDownlinkEvent(ctx context.Context, _ models.Integration, vars map[string]string, event integration.DownlinkEvent) error {
+	return nil
+}
+
 // HandleJoinEvent is not implemented.
 func (i *Integration) HandleJoinEvent(ctx context.Context, _ models.Integration, vars map[string]string, event integration.JoinEvent) error {
 	return nil

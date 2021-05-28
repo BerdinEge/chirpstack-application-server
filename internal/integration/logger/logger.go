@@ -37,6 +37,14 @@ func (i *Integration) HandleUplinkEvent(ctx context.Context, _ models.Integratio
 	return i.log(ctx, eventlog.Uplink, devEUI, &pl)
 }
 
+// HandleDownlinkEvent sends an DownlinkEvent.
+func (i *Integration) HandleDownlinkEvent(ctx context.Context, _ models.Integration, vars map[string]string, pl pb.DownlinkEvent) error {
+	var devEUI lorawan.EUI64
+	copy(devEUI[:], pl.DevEui)
+
+	return i.log(ctx, eventlog.Downlink, devEUI, &pl)
+}
+
 // HandleJoinEvent sends a JoinEvent.
 func (i *Integration) HandleJoinEvent(ctx context.Context, _ models.Integration, vars map[string]string, pl pb.JoinEvent) error {
 	var devEUI lorawan.EUI64

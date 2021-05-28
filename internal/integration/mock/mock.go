@@ -10,6 +10,7 @@ import (
 // Integration implements a mock integration.
 type Integration struct {
 	SendDataUpChan                  chan pb.UplinkEvent
+	SendDataDownChan                chan pb.DownlinkEvent
 	SendJoinNotificationChan        chan pb.JoinEvent
 	SendACKNotificationChan         chan pb.AckEvent
 	SendErrorNotificationChan       chan pb.ErrorEvent
@@ -24,6 +25,7 @@ type Integration struct {
 func New() *Integration {
 	return &Integration{
 		SendDataUpChan:                  make(chan pb.UplinkEvent, 100),
+		SendDataDownChan:                make(chan pb.DownlinkEvent, 100),
 		SendJoinNotificationChan:        make(chan pb.JoinEvent, 100),
 		SendACKNotificationChan:         make(chan pb.AckEvent, 100),
 		SendErrorNotificationChan:       make(chan pb.ErrorEvent, 100),
@@ -43,6 +45,12 @@ func (i *Integration) Close() error {
 // HandleUplinkEvent sends an UplinkEvent.
 func (i *Integration) HandleUplinkEvent(ctx context.Context, vars map[string]string, payload pb.UplinkEvent) error {
 	i.SendDataUpChan <- payload
+	return nil
+}
+
+// HandleDownlinkEvent sends an DownlinkEvent.
+func (i *Integration) HandleDownlinkEvent(ctx context.Context, vars map[string]string, payload pb.DownlinkEvent) error {
+	i.SendDataDownChan <- payload
 	return nil
 }
 
