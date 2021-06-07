@@ -47,6 +47,8 @@ var tasks = []func(*downlinkContext) error{
 
 // Handle handles the downlink event.
 func Handle(ctx context.Context, req as.HandleDownlinkDataRequest) error {
+	fmt.Println("req: ")
+	fmt.Printf("%+v\n", req)
 	uc := downlinkContext{
 		ctx:             ctx,
 		downlinkDataReq: req,
@@ -170,12 +172,26 @@ func getApplication(ctx *downlinkContext) error {
 }*/
 
 func decryptPayload(ctx *downlinkContext) error {
+	log.Info("decryptPayload METODU BAŞLADI !!! ")
 	var err error
 
-	ctx.data, err = lorawan.EncryptFRMPayload(ctx.device.AppSKey, true, ctx.device.DevAddr, ctx.downlinkDataReq.FCnt, ctx.downlinkDataReq.Data)
+	//ctx.data, err = lorawan.EncryptFRMPayload(ctx.device.AppSKey, true, ctx.device.DevAddr, ctx.downlinkDataReq.FCnt, ctx.downlinkDataReq.Data)
+	//if err != nil {
+	//	return errors.Wrap(err, "decrypt payload error")
+	//}
+	fmt.Println("ctx.downlinkDataReq: ")
+	fmt.Printf("%+v\n", ctx.downlinkDataReq)
+	log.Info("ctx.device.AppSKey: ", ctx.device.AppSKey)
+	log.Info("ctx.device.DevAddr: ", ctx.device.DevAddr)
+	log.Info("ctx.downlinkDataReq.FCnt: ", ctx.downlinkDataReq.FCnt)
+	log.Info("ctx.downlinkDataReq.Data: ", ctx.downlinkDataReq.Data)
+
+	ctx.data, err = lorawan.EncryptFOpts(ctx.device.AppSKey, true, false, ctx.device.DevAddr, ctx.downlinkDataReq.FCnt, ctx.downlinkDataReq.Data)
 	if err != nil {
 		return errors.Wrap(err, "decrypt payload error")
 	}
+	log.Info("VERİ DECRYPT EDİLDİ")
+	log.Info("ctx.data: ", ctx.data)
 	return nil
 }
 
@@ -259,6 +275,7 @@ func handleIntegrations(ctx *downlinkContext) error {
 		Tags:              make(map[string]string),
 		ConfirmedDownlink: ctx.downlinkDataReq.ConfirmedDownlink,
 		DevAddr:           ctx.device.DevAddr[:],
+		PublishedAt:       ctx.downlinkDataReq.SentAt,
 	}
 
 	// set tags

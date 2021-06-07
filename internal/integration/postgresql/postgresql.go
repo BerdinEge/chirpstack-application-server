@@ -41,6 +41,7 @@ type Integration struct {
 
 // New creates a new PostgreSQL integration.
 func New(m marshaler.Type, conf config.IntegrationPostgreSQLConfig) (*Integration, error) {
+	log.Info("POSTGRE NEW METODU BAŞLIYOR")
 	// In case of (binary) Protobuf marshaler, use JSON Protobuf mapping as we
 	// write the output to a jsonb field.
 	if m == marshaler.Protobuf {
@@ -64,9 +65,12 @@ func New(m marshaler.Type, conf config.IntegrationPostgreSQLConfig) (*Integratio
 	d.SetMaxOpenConns(conf.MaxOpenConnections)
 	d.SetMaxIdleConns(conf.MaxIdleConnections)
 
+	log.Info("MIGRATION ATILIYOR")
 	if err := MigrateUp(d); err != nil {
+		log.Info("MIGRATION SIRASINDA HATA")
 		return nil, err
 	}
+	log.Info("MIGRATION ATILDI")
 	return &Integration{
 		db:        d,
 		marshaler: m,
@@ -81,7 +85,7 @@ func (i *Integration) Close() error {
 	return nil
 }
 
-// MigrateUp configure postgres-integration migration down
+// MigrateUp configure postgres-integration migration up
 func MigrateUp(db *sqlx.DB) error {
 	log.Info("integration/postgresql: applying PostgreSQL schema migrations")
 
@@ -157,6 +161,13 @@ func MigrateDown(db *sqlx.DB) error {
 
 // HandleUplinkEvent writes an UplinkEvent into the database.
 func (i *Integration) HandleUplinkEvent(ctx context.Context, _ models.Integration, vars map[string]string, pl pb.UplinkEvent) error {
+
+	log.Info("*******************************************")
+	log.Info("*******************************************")
+
+	fmt.Println("UplinkEvent: ")
+	fmt.Printf("%+v\n", pl)
+
 	// use an UUID here so that we can later refactor this for correlation
 	id, err := uuid.NewV4()
 	if err != nil {
@@ -207,6 +218,9 @@ func (i *Integration) HandleUplinkEvent(ctx context.Context, _ models.Integratio
 	copy(devEUI[:], pl.DevEui)
 	copy(devAddr[:], pl.DevAddr)
 
+	log.Info("UPLINK INSERT QUERY İŞLETİLİYOR")
+	log.Info("pl.Data: ", pl.Data)
+
 	_, err = i.db.Exec(`
 		insert into device_up (
 			id,
@@ -251,6 +265,7 @@ func (i *Integration) HandleUplinkEvent(ctx context.Context, _ models.Integratio
 	if err != nil {
 		return errors.Wrap(err, "insert error")
 	}
+	log.Info("UPLINK INSERT QUERY İŞLETİLDİ")
 
 	log.WithFields(log.Fields{
 		"event":   "up",
@@ -266,98 +281,102 @@ func (i *Integration) HandleDownlinkEvent(ctx context.Context, _ models.Integrat
 	log.Info("*******************************************")
 	log.Info("*******************************************")
 	log.Info("*******************************************")
-	log.Info("*******************************************")
-	log.Info("*******************************************")
-	log.Info("*******************************************")
 	log.Info("VERİ POSTGRE METODUNA KADAR GELDİ")
 	log.Info("*******************************************")
 	log.Info("*******************************************")
 	log.Info("*******************************************")
-	log.Info("*******************************************")
-	log.Info("*******************************************")
-	log.Info("*******************************************")
-	/*
-		// use an UUID here so that we can later refactor this for correlation
-		id, err := uuid.NewV4()
+
+	fmt.Println("DownlinkEvent: ")
+	fmt.Printf("%+v\n", pl)
+
+	// use an UUID here so that we can later refactor this for correlation
+	id, err := uuid.NewV4()
+	if err != nil {
+		return errors.Wrap(err, "new uuid error")
+	}
+
+	// get the rxTime either using the system-time or using one of the
+	// gateway provided timestamps.
+	//rxTime, err := time.Parse(time.Now().String(), pl.SentAt)
+	//if err != nil {
+	//	return errors.Wrap(err, "protobuf timestamp error")
+	//}
+
+	ts, err := ptypes.Timestamp(pl.PublishedAt)
+	if err != nil {
+		return errors.Wrap(err, "protobuf timestamp error")
+	}
+
+	txInfoB := []byte("null")
+	if txInfo := pl.GetTxInfo(); txInfo != nil {
+		txInfoB, err = marshaler.Marshal(i.marshaler, txInfo)
 		if err != nil {
-			return errors.Wrap(err, "new uuid error")
+			return errors.Wrap(err, "marshal tx_info error")
 		}
+	}
 
-		// get the rxTime either using the system-time or using one of the
-		// gateway provided timestamps.
-		rxTime, err := time.Parse(time.Now().String(), pl.SentAt)
-		if err != nil {
-			return errors.Wrap(err, "protobuf timestamp error")
-		}
+	objectJSON := json.RawMessage("null")
+	if pl.ObjectJson != "" {
+		objectJSON = json.RawMessage(pl.ObjectJson)
+	}
 
-		txInfoB := []byte("null")
-		if txInfo := pl.GetTxInfo(); txInfo != nil {
-			txInfoB, err = marshaler.Marshal(i.marshaler, txInfo)
-			if err != nil {
-				return errors.Wrap(err, "marshal tx_info error")
-			}
-		}
+	var devEUI lorawan.EUI64
+	var devAddr lorawan.DevAddr
+	copy(devEUI[:], pl.DevEui)
+	copy(devAddr[:], pl.DevAddr)
 
-		objectJSON := json.RawMessage("null")
-		if pl.ObjectJson != "" {
-			objectJSON = json.RawMessage(pl.ObjectJson)
-		}
-
-		var devEUI lorawan.EUI64
-		var devAddr lorawan.DevAddr
-		copy(devEUI[:], pl.DevEui)
-		copy(devAddr[:], pl.DevAddr)
-
-		_, err = i.db.Exec(`
-			insert into device_down (
-				id,
-				sent_at,
-				dev_eui,
-				device_name,
-				application_id,
-				application_name,
-				frequency,
-				dr,
-				adr,
-				f_cnt,
-				f_port,
-				data,
-				rx_info,
-				tx_info,
-				object,
-				tags,
-				confirmed_downlink,
-				dev_addr
-			) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
+	log.Info("downlink INSERT QUERY İŞLETİLİYOR")
+	_, err = i.db.Exec(`
+		insert into device_down (
 			id,
-			rxTime,
-			devEUI,
-			pl.DeviceName,
-			pl.ApplicationId,
-			pl.ApplicationName,
-			// TODO: deprecate this field, as it is part of tx_info.
-			pl.GetTxInfo().GetFrequency(),
-			pl.Dr,
-			pl.Adr,
-			pl.FCnt,
-			pl.FPort,
-			pl.Data,
-			json.RawMessage(txInfoB),
-			objectJSON,
-			tagsToHstore(pl.Tags),
-			pl.ConfirmedDownlink,
-			devAddr[:],
-		)
-		if err != nil {
-			return errors.Wrap(err, "insert error")
-		}
+			sent_at,
+			dev_eui,
+			device_name,
+			application_id,
+			application_name,
+			frequency,
+			dr,
+			adr,
+			f_cnt,
+			f_port,
+			data,
+			tx_info,
+			object,
+			tags,
+			confirmed_downlink,
+			dev_addr
+		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
+		id,
+		ts,
+		devEUI,
+		pl.DeviceName,
+		pl.ApplicationId,
+		pl.ApplicationName,
+		// TODO: deprecate this field, as it is part of tx_info.
+		pl.GetTxInfo().GetFrequency(),
+		pl.Dr,
+		pl.Adr,
+		pl.FCnt,
+		pl.FPort,
+		pl.Data,
+		json.RawMessage(txInfoB),
+		objectJSON,
+		tagsToHstore(pl.Tags),
+		pl.ConfirmedDownlink,
+		devAddr[:],
+	)
+	if err != nil {
+		log.Info("downlink INSERT QUERY SIRASINDA BİR HATA MEYDANA GELDİ!")
+		return errors.Wrap(err, "insert error")
+	}
+	log.Info("downlink INSERT QUERY İŞLETİLDİ DEWAMKE")
 
-		log.WithFields(log.Fields{
-			"event":   "up",
-			"dev_eui": devEUI,
-			"ctx_id":  ctx.Value(logging.ContextIDKey),
-		}).Info("integration/postgresql: event stored")
-	*/
+	log.WithFields(log.Fields{
+		"event":   "up",
+		"dev_eui": devEUI,
+		"ctx_id":  ctx.Value(logging.ContextIDKey),
+	}).Info("integration/postgresql: event stored")
+
 	return nil
 }
 

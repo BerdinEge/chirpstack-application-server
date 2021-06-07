@@ -40,7 +40,7 @@ var tasks = []func(*uplinkContext) error{
 	getDeviceProfile,
 	updateDeviceLastSeenAndDR,
 	updateDeviceActivation,
-	decryptPayload,
+	decryptPayload, // içinde sadece fopts payloadı decrypt etmesinin sebebi frm payloadın zaten decrypted gelmesi.
 	handleCodec,
 	handleIntegrations,
 }
@@ -172,10 +172,12 @@ func updateDeviceActivation(ctx *uplinkContext) error {
 func decryptPayload(ctx *uplinkContext) error {
 	var err error
 
+	log.Info("UPLINK DECRYPT ÖNCESİ DATA: ", ctx.uplinkDataReq.Data)
 	ctx.data, err = lorawan.EncryptFRMPayload(ctx.device.AppSKey, true, ctx.device.DevAddr, ctx.uplinkDataReq.FCnt, ctx.uplinkDataReq.Data)
 	if err != nil {
 		return errors.Wrap(err, "decrypt payload error")
 	}
+	log.Info("UPLINK DECRYPT SONRASI DATA: ", ctx.data)
 	return nil
 }
 

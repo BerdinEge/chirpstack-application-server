@@ -196,7 +196,7 @@ func (i *Integration) HandleDownlinkEvent(ctx context.Context, _ models.Integrat
 	var devEUI lorawan.EUI64
 	copy(devEUI[:], pl.DevEui)
 
-	for _, url := range getURLs(i.getEventEndpointURL("up")) {
+	for _, url := range getURLs(i.getEventEndpointURL("down")) {
 		i.sendEvent(ctx, "down", url, devEUI, &pl)
 	}
 

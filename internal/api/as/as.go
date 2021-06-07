@@ -80,8 +80,14 @@ func NewApplicationServerAPI() *ApplicationServerAPI {
 
 // HandleUplinkData handles incoming (uplink) data.
 func (a *ApplicationServerAPI) HandleUplinkData(ctx context.Context, req *as.HandleUplinkDataRequest) (*empty.Empty, error) {
+	log.Info("***")
+	log.Info("UPLINK ALINDI, HandleUplinkData METODU BAŞLADI !!!")
+	log.Info("***")
+
+	fmt.Println("(HandleUplinkData) req: ")
+	fmt.Printf("%+v\n", req)
 	if err := uplink.Handle(ctx, *req); err != nil {
-		return nil, grpc.Errorf(codes.Internal, "handle uplink data error: %s", err)
+		return nil, grpc.Errorf(codes.Internal, "handle uplink data error: %s", err) //todo
 	}
 
 	return &empty.Empty{}, nil
@@ -89,8 +95,14 @@ func (a *ApplicationServerAPI) HandleUplinkData(ctx context.Context, req *as.Han
 
 // HandleDownlinkData handles ongoing (downlink) data.
 func (a *ApplicationServerAPI) HandleDownlinkData(ctx context.Context, req *as.HandleDownlinkDataRequest) (*empty.Empty, error) {
+	fmt.Println("***")
+	fmt.Println(" !!!!!!!      HANDLEDOWNLİNKDATA METODU BAŞLADI     !!!!!!!")
+	fmt.Println("***")
+
+	fmt.Println("(HandleDownlinkData) req: ")
+	fmt.Printf("%+v\n", req)
 	if err := downlink.Handle(ctx, *req); err != nil {
-		return nil, grpc.Errorf(codes.Internal, "handle downlink data error: %s", err)
+		return nil, grpc.Errorf(codes.Internal, "handle downlink data error: %s", err) //todo
 	}
 
 	return &empty.Empty{}, nil
