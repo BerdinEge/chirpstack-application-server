@@ -40,7 +40,7 @@ var tasks = []func(*downlinkContext) error{
 	getDeviceProfile,
 	//updateDeviceLastSeenAndDR,
 	//updateDeviceActivation,
-	decryptPayload,
+	//decryptPayload,
 	handleCodec,
 	handleIntegrations,
 }
@@ -260,6 +260,7 @@ func handleCodec(ctx *downlinkContext) error {
 }
 
 func handleIntegrations(ctx *downlinkContext) error {
+	ctx.data = ctx.downlinkDataReq.Data
 	pl := pb.DownlinkEvent{
 		ApplicationId:     uint64(ctx.device.ApplicationID),
 		ApplicationName:   ctx.application.Name,

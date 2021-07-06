@@ -246,6 +246,7 @@ func handleCodec(ctx *uplinkContext) error {
 }
 
 func handleIntegrations(ctx *uplinkContext) error {
+	log.Info("handleIntegrations BAŞLADI")
 	pl := pb.UplinkEvent{
 		ApplicationId:   uint64(ctx.device.ApplicationID),
 		ApplicationName: ctx.application.Name,
@@ -282,6 +283,7 @@ func handleIntegrations(ctx *uplinkContext) error {
 
 	// Handle the actual integration handling in a Go-routine so that the
 	// as.HandleUplinkData api can return.
+	log.Info("pl.Data: ", pl.Data)
 	go func() {
 		err := integration.ForApplicationID(ctx.device.ApplicationID).HandleUplinkEvent(bgCtx, vars, pl)
 		if err != nil {

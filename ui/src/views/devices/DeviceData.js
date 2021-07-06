@@ -161,6 +161,8 @@ class DeviceData extends Component {
   }
 
   onData(d) {
+    console.log("onData metodu")
+    alert("onData metodu");
     if (this.state.paused) {
       return;
     }
@@ -184,7 +186,7 @@ class DeviceData extends Component {
 
   render() {
     const data = this.state.data.map((d, i) => <DeviceDataItem key={d.id} data={d} />);
-
+    alert("render metodu");
     return(
       <Grid container spacing={4}>
         <Dialog
