@@ -1,18 +1,23 @@
 package external
 
 import (
+	"fmt"
+
 	"github.com/gofrs/uuid"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/jmoiron/sqlx"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 
 	pb "github.com/brocaar/chirpstack-api/go/v3/as/external/api"
+	api "github.com/brocaar/chirpstack-api/go/v3/fuota"
 	"github.com/brocaar/chirpstack-api/go/v3/ns"
 	"github.com/brocaar/chirpstack-application-server/internal/api/external/auth"
 	"github.com/brocaar/chirpstack-application-server/internal/api/helpers"
+	fs "github.com/brocaar/chirpstack-application-server/internal/backend/fuotaserver"
 	"github.com/brocaar/chirpstack-application-server/internal/backend/networkserver"
 	"github.com/brocaar/chirpstack-application-server/internal/multicast"
 	"github.com/brocaar/chirpstack-application-server/internal/storage"
@@ -481,4 +486,66 @@ func (a *MulticastGroupAPI) ListQueue(ctx context.Context, req *pb.ListMulticast
 	}
 
 	return &resp, nil
+}
+
+// Create creates the given multicast-group.
+func (a *MulticastGroupAPI) BulkMulticastDeployment(ctx context.Context, req *pb.BulkMulticastDeploymentRequest) (*pb.BulkMulticastDeploymentResponse, error) {
+	if req.Deployment == nil {
+		return nil, grpc.Errorf(codes.InvalidArgument, "multicast_deployment must not be nil")
+	}
+
+	if err := a.validator.Validate(ctx,
+		auth.ValidateMulticastGroupsAccess(auth.Create, req.Deployment.ApplicationId)); err != nil {
+		return nil, grpc.Errorf(codes.Unauthenticated, "authentication failed: %s", err)
+	}
+
+	var devList []*api.BulkDeploymentDevice
+
+	for _, d := range req.GetDeployment().Devices {
+		var devEUI []byte
+
+		copy(devEUI[:], d.DevEui)
+
+		var device api.BulkDeploymentDevice
+		device.DevEui = devEUI
+
+		devList = append(devList, &device)
+	}
+
+	mg := api.BulkMulticastDeployment{
+		Devices:             devList,
+		UnicastTimeout:      req.Deployment.UnicastTimeout,
+		MulticastDr:         req.Deployment.MulticastDr,
+		MulticastFrequency:  req.Deployment.MulticastFrequency,
+		MulticastGroupId:    req.Deployment.MulticastGroupId,
+		ApplicationId:       req.Deployment.ApplicationId,
+		UnicastAttemptCount: req.Deployment.UnicastAttemptCount,
+		McRootKey:           req.Deployment.McRootKey,
+	}
+
+	err := fs.SetupClient()
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := fs.FuotaServiceClient().BulkMulticastDeployment(ctx, &api.BulkMulticastDeploymentRequest{
+		Deployment: &mg,
+	})
+
+	if err != nil {
+		fmt.Errorf("bulk multicast deployment error: %w", err)
+		return nil, err
+	}
+
+	log.WithFields(log.Fields{
+		"NumberOfDevices":    resp.NumberOfDevices,
+		"multicast_group_id": req.Deployment.MulticastGroupId,
+	}).Info("fuota: bulk multicast deployment created")
+
+	//var mgID uuid.UUID
+	//copy(mgID[:], mg.MulticastGroup.Id)
+
+	return &pb.BulkMulticastDeploymentResponse{
+		NumberOfDevices: resp.NumberOfDevices,
+	}, nil
 }

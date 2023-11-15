@@ -92,6 +92,12 @@ type Config struct {
 		} `mapstructure:"branding"`
 	} `mapstructure:"application_server"`
 
+	FuotaServer struct {
+		API struct {
+			Server string `mapstructure:"server"`
+		} `mapstructure:"api"`
+	} `mapstructure:"fuota_server"`
+
 	JoinServer struct {
 		Bind    string
 		CACert  string `mapstructure:"ca_cert"`
