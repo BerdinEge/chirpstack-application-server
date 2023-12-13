@@ -502,25 +502,22 @@ func (a *MulticastGroupAPI) BulkMulticastDeployment(ctx context.Context, req *pb
 	var devList []*api.BulkDeploymentDevice
 
 	for _, d := range req.GetDeployment().Devices {
-		var devEUI []byte
-
-		copy(devEUI[:], d.DevEui)
-
 		var device api.BulkDeploymentDevice
-		device.DevEui = devEUI
+		device.DevEui = d.DevEui
 
 		devList = append(devList, &device)
 	}
 
 	mg := api.BulkMulticastDeployment{
-		Devices:             devList,
-		UnicastTimeout:      req.Deployment.UnicastTimeout,
-		MulticastDr:         req.Deployment.MulticastDr,
-		MulticastFrequency:  req.Deployment.MulticastFrequency,
-		MulticastGroupId:    req.Deployment.MulticastGroupId,
-		ApplicationId:       req.Deployment.ApplicationId,
-		UnicastAttemptCount: req.Deployment.UnicastAttemptCount,
-		McRootKey:           req.Deployment.McRootKey,
+		Devices:                  devList,
+		UnicastTimeout:           req.Deployment.UnicastTimeout,
+		MulticastDr:              req.Deployment.MulticastDr,
+		MulticastFrequency:       req.Deployment.MulticastFrequency,
+		MulticastGroupId:         req.Deployment.MulticastGroupId,
+		ApplicationId:            req.Deployment.ApplicationId,
+		UnicastAttemptCount:      req.Deployment.UnicastAttemptCount,
+		McRootKey:                req.Deployment.McRootKey,
+		ExistingMulticastGroupId: req.Deployment.ExistingMulticastGroupId,
 	}
 
 	err := fs.SetupClient()
@@ -538,14 +535,16 @@ func (a *MulticastGroupAPI) BulkMulticastDeployment(ctx context.Context, req *pb
 	}
 
 	log.WithFields(log.Fields{
-		"NumberOfDevices":    resp.NumberOfDevices,
-		"multicast_group_id": req.Deployment.MulticastGroupId,
+		"NumberOfDevices":                resp.NumberOfDevices,
+		"new_created_multicast_group_id": resp.MulticastGroupId,
+		"multicast_group_id":             req.Deployment.MulticastGroupId,
 	}).Info("fuota: bulk multicast deployment created")
 
 	//var mgID uuid.UUID
 	//copy(mgID[:], mg.MulticastGroup.Id)
 
 	return &pb.BulkMulticastDeploymentResponse{
-		NumberOfDevices: resp.NumberOfDevices,
+		NumberOfDevices:  resp.NumberOfDevices,
+		MulticastGroupId: resp.MulticastGroupId,
 	}, nil
 }
