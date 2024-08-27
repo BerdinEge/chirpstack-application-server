@@ -548,3 +548,37 @@ func (a *MulticastGroupAPI) BulkMulticastDeployment(ctx context.Context, req *pb
 		DeploymentId:     resp.DeploymentId,
 	}, nil
 }
+
+// Resets the multicast setup of the given device
+func (a *MulticastGroupAPI) ResetMulticastSetup(ctx context.Context, req *pb.ResetMulticastSetupRequest) (*pb.ResetMulticastSetupResponse, error) {
+
+	if req.DeploymentId == "" {
+		return nil, grpc.Errorf(codes.InvalidArgument, "DeploymentId must not be empty")
+	}
+	if req.DevEui == "" {
+		return nil, grpc.Errorf(codes.InvalidArgument, "DevEui must not be empty")
+	}
+
+	err := fs.SetupClient()
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := fs.FuotaServiceClient().ResetMulticastSetup(ctx, &api.ResetMulticastSetupRequest{
+		DeploymentId: req.DeploymentId,
+		DevEui:       req.DevEui,
+	})
+
+	if err != nil {
+		fmt.Errorf("reset multicast setup error: %w", err)
+		return nil, err
+	}
+
+	log.WithFields(log.Fields{
+		"IsSucceed": resp.IsSucceed,
+	}).Info("fuota: multicast setup flushed")
+
+	return &pb.ResetMulticastSetupResponse{
+		IsSucceed: resp.IsSucceed,
+	}, nil
+}
